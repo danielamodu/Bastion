@@ -15,7 +15,7 @@ except Exception as e:
     logging.error(f"Failed to load credentials: {e}")
     exit(1)
 
-COMPETITION_ID = "cmq6l1gnq0lkz60y9i9d9eca1"
+COMPETITION_ID = "cmq57o53r0bhw18g23qkydb08"
 BASE_URL = "https://arena.dev.fun/api/arena"
 HEADERS = {
     "x-arena-api-key": API_KEY,
@@ -328,10 +328,10 @@ while True:
             time.sleep(2)
             continue
 
-        participant = data.get('participant', {})
+        participant = data.get('participant') or {}
         chip_state = participant.get('chipState')
         total_chips = participant.get('totalChips', 0)
-        runner = data.get('runner', {})
+        runner = data.get('runner') or {}
         active_tables = runner.get('activeTableCount', 0)
 
         if chip_state == 'busted':
@@ -340,7 +340,7 @@ while True:
             time.sleep(2)
             continue
 
-        if chip_state in ['available', 'locked_in_play'] and active_tables < 10:
+        if chip_state in [None, 'available', 'locked_in_play'] and active_tables < 10:
             if current_time % 5 < 1:
                 logging.info(f"Active tables: {active_tables}. Joining another...")
                 try_join_or_rebuy("join")
