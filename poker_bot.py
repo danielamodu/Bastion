@@ -147,9 +147,11 @@ def decide_action(table_state, total_chips, lives_remaining):
         if is_chip_leader:
             is_premium = (is_pair and high_card >= 8) or (high_card == 12 and low_card >= 10)
 
-        is_playable = is_premium or (is_pair and high_card >= 4) or \
-                     (high_card == 12 and low_card >= 8) or \
-                     (is_suited and high_card == 11 and low_card >= 9)
+        is_playable = is_premium or is_pair or \
+                      high_card >= 11 or \
+                      (high_card == 10 and low_card >= 7) or \
+                      (is_suited and high_card >= 8) or \
+                      (abs(val1 - val2) <= 2 and high_card >= 7)
 
         if is_playable:
             if allowed.get('canRaise'):
@@ -181,9 +183,9 @@ def decide_action(table_state, total_chips, lives_remaining):
         if len(board_cards) == 5 and allowed.get('canCall') and call_amt > 0:
             top_board_val = max(board_vals) if board_vals else -1
             has_top_pair_or_better = (is_pair and val1 > top_board_val) or (val1 == top_board_val) or (val2 == top_board_val) or made_flush
-            if not has_top_pair_or_better:
+            if not has_top_pair_or_better and pot_odds > 0.15:
                 if allowed.get('canFold'):
-                    return {"action": "fold"}, "Folding to river aggression without top pair+"
+                    return {"action": "fold"}, f"Folding to river aggression without top pair+ (odds {pot_odds:.2f})"
         
         is_strong_postflop = is_pair or hit_pair or made_flush
         if is_chip_leader:
