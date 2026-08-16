@@ -1,0 +1,5 @@
+google-antigravity==0.1.12
+fastapi
+uvicorn
+python-dotenv
+google-cloud-firestore
