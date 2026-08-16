@@ -1,6 +1,6 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 import random
 import logging
 import os
@@ -49,9 +49,21 @@ def lookup_mock_fx_rate(currency_pair: str, token: str = None) -> Dict[str, Any]
     }
 
 @app.post("/invoke")
-async def invoke_agent(req: PromptRequest):
+async def invoke_agent(
+    req: PromptRequest,
+    x_bastion_token: Optional[str] = Header(None)
+):
     if not req.prompt:
         raise HTTPException(status_code=400, detail="Prompt is required")
+
+    # ZERO-TRUST BOUNDARY — enforced at HTTP layer before agent runs
+    expected_token = os.environ.get("BASTION_SHARED_TOKEN")
+    if not expected_token or x_bastion_token != expected_token:
+        logging.warning(f"HTTP REJECTED: Invalid or missing X-Bastion-Token header.")
+        raise HTTPException(
+            status_code=403,
+            detail="Access Denied: Invalid or missing X-Bastion-Token credential."
+        )
 
     config = ag.LocalAgentConfig(
         model="gemini-3.5-flash",

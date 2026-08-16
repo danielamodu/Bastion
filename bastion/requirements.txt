@@ -1,5 +1,7 @@
-google-antigravity==0.1.12
 fastapi
-uvicorn
-python-dotenv
+google-antigravity==0.1.12
 google-cloud-firestore
+google-cloud-modelarmor
+google-cloud-trace
+python-dotenv
+uvicorn
