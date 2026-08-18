@@ -141,11 +141,18 @@ Runs a success call and a rejected call through the full agent mesh, emitting re
 python test_audit_trace.py
 ```
 
-Live traces viewable at:
+> [!NOTE]
+> The live Trace links below require GCP IAM access to the `bastion-505622` project to view. For convenience, screenshots of the generated trace waterfalls are provided below.
+
+**Live traces (Requires Project IAM Access):**
 - **Success trace:** https://console.cloud.google.com/traces/list?project=bastion-505622
   - `trace_id: 9ad9ef9e0c8811b9c820208d89acecbb`
 - **Rejected trace:**
   - `trace_id: 3e632691bb4f674209518c4c36f9bae0`
+
+**Trace Screenshots:**
+![Cloud Trace Success Waterfall](docs/trace_success.png)
+![Cloud Trace Rejected Waterfall](docs/trace_rejected.png)
 
 ### Model Armor adversarial test *(pending billing activation)*
 
