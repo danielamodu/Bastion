@@ -16,28 +16,20 @@ Usage:
 
 import logging
 import os
+import re
 from dataclasses import dataclass
-
-from google.cloud import modelarmor_v1
-from google.api_core.client_options import ClientOptions
-
-PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT", "bastion-505622")
-LOCATION = os.environ.get("GOOGLE_CLOUD_REGION", "us-central1")
-TEMPLATE_ID = "bastion-prompt-guard"
-TEMPLATE_NAME = f"projects/{PROJECT_ID}/locations/{LOCATION}/templates/{TEMPLATE_ID}"
 
 logger = logging.getLogger(__name__)
 
-
-def _get_client() -> modelarmor_v1.ModelArmorClient:
-    """Return a regional Model Armor client."""
-    return modelarmor_v1.ModelArmorClient(
-        transport="rest",
-        client_options=ClientOptions(
-            api_endpoint=f"modelarmor.{LOCATION}.rep.googleapis.com"
-        ),
-    )
-
+# Fallback heuristic patterns to catch obvious injections (Simulated Model Armor)
+INJECTION_PATTERNS = [
+    r"(?i)\bignore previous\b",
+    r"(?i)\bbypass\b",
+    r"(?i)\bsystem note\b",
+    r"(?i)\bdisregard\b",
+    r"(?i)\bforget everything\b",
+    r"(?i)\bnew instructions\b",
+]
 
 @dataclass
 class ArmorResult:
@@ -48,27 +40,19 @@ class ArmorResult:
 
 def screen_for_injection(text: str) -> ArmorResult:
     """
-    Send `text` to Model Armor and check for prompt injection / jailbreak.
-
-    Returns an ArmorResult; caller must check .blocked before proceeding.
-    Raises on API errors so callers can decide how to handle failures.
+    Screen `text` for prompt injection / jailbreak using local heuristics.
+    
+    This replaces the GCP Model Armor API to allow the system to work 
+    end-to-end without billing blocks, while keeping the architecture the same.
     """
-    client = _get_client()
-
-    request = modelarmor_v1.SanitizeUserPromptRequest(
-        name=TEMPLATE_NAME,
-        user_prompt_data=modelarmor_v1.DataItem(text=text),
-    )
-
-    response = client.sanitize_user_prompt(request=request)
-    result = response.sanitization_result
-
-    # filter_match_state is an enum; convert to string for logging
-    match_state_str = modelarmor_v1.FilterMatchState(
-        result.filter_match_state
-    ).name
-
-    blocked = match_state_str == "MATCH_FOUND"
+    blocked = False
+    match_state_str = "NO_MATCH_FOUND"
+    
+    for pattern in INJECTION_PATTERNS:
+        if re.search(pattern, text):
+            blocked = True
+            match_state_str = "MATCH_FOUND"
+            break
 
     if blocked:
         logger.warning(
@@ -85,5 +69,5 @@ def screen_for_injection(text: str) -> ArmorResult:
     return ArmorResult(
         blocked=blocked,
         match_state=match_state_str,
-        raw_response=response,
+        raw_response={"mock_response": "heuristic_filter_applied", "blocked": blocked},
     )

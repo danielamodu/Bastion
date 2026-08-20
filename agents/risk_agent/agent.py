@@ -3,9 +3,9 @@ import logging
 import os
 from typing import Any, Dict
 from dotenv import load_dotenv
+# Load environment variables
+load_dotenv()
 
-from google import antigravity as ag
-from google.antigravity.hooks import policy
 from model_armor.armor import screen_for_injection
 
 # Load environment variables
@@ -58,6 +58,13 @@ def assess_risk(currency_pair: str, amount: float) -> Dict[str, Any]:
     }
 
 async def main():
+    try:
+        from google import antigravity as ag
+        from google.antigravity.hooks import policy
+    except ImportError:
+        logging.error("google.antigravity not found. Ensure the SDK is installed.")
+        return
+        
     config = ag.LocalAgentConfig(
         model="gemini-3.5-flash",
         vertex=False,
